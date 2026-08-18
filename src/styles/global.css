@@ -1,0 +1,10 @@
+:root {
+    --main-color: #59ffc2;
+
+    color-scheme: dark;
+    font-family: sans-serif;
+}
+
+::selection {
+    background-color: var(--main-color);
+}
