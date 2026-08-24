@@ -2,9 +2,10 @@
     --main-color: #59ffc2;
 
     color-scheme: dark;
-    font-family: sans-serif;
+    font-family: "inter", sans-serif;
 }
 
 ::selection {
+    color: black;
     background-color: var(--main-color);
 }

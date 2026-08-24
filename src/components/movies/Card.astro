@@ -6,13 +6,14 @@ interface Props {
     duration: number;
     imageSrc?: string;
     imageAlt?: string;
+    transitionName?: string;
 }
 
-const { title, duration, imageSrc, imageAlt } = Astro.props;
+const { title, duration, imageSrc, imageAlt, transitionName } = Astro.props;
 ---
 
 <div class="movie-card">
-    <img class="background" src={imageSrc} alt={imageAlt} />
+    <img class="background" src={imageSrc} alt={imageAlt}  transition:name={transitionName} />
     <div class="gradient-overlay"></div>
     <div class="info">
         <h2>{title}</h2>
