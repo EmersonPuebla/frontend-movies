@@ -53,6 +53,9 @@ import { movies } from "@/data/movies";
         </form>
 
         <form id="confirmation-form" class="auth-form is-hidden">
+          <label for="confirmation-email">Email</label>
+          <input id="confirmation-email" name="email" type="email" placeholder="tu@email.com" autocomplete="email" required />
+
           <label for="confirmation-code-1">Código de confirmación</label>
           <div class="code-inputs" role="group" aria-label="Código de confirmación de 6 dígitos">
             {
@@ -282,12 +285,36 @@ import { movies } from "@/data/movies";
 </style>
 
 <script>
-  const forms = {
+import {
+  CognitoUser,
+  CognitoUserAttribute,
+  CognitoUserPool,
+  AuthenticationDetails,
+} from "amazon-cognito-identity-js";
+
+const forms = {
     login: document.querySelector<HTMLFormElement>("#login-form"),
     register: document.querySelector<HTMLFormElement>("#register-form"),
     confirmation: document.querySelector<HTMLFormElement>("#confirmation-form"),
   };
   const viewButtons = document.querySelectorAll<HTMLButtonElement>("[data-view]");
+  let pendingUsername = "";
+
+  const getUserPool = () => {
+    const userPoolId = import.meta.env.PUBLIC_COGNITO_USER_POOL_ID;
+    const clientId = import.meta.env.PUBLIC_COGNITO_CLIENT_ID;
+
+    if (!userPoolId || !clientId) {
+      throw new Error("Configura PUBLIC_COGNITO_USER_POOL_ID y PUBLIC_COGNITO_CLIENT_ID.");
+    }
+
+    return new CognitoUserPool({ UserPoolId: userPoolId, ClientId: clientId });
+  };
+
+  const showMessage = (form: HTMLFormElement | null, message: string) => {
+    const target = form?.querySelector<HTMLElement>(".form-message");
+    if (target) target.textContent = message;
+  };
 
   const showView = (view: keyof typeof forms) => {
     Object.entries(forms).forEach(([name, form]) => {
@@ -306,6 +333,8 @@ import { movies } from "@/data/movies";
     event.preventDefault();
     const password = forms.register?.elements.namedItem("password") as HTMLInputElement;
     const confirmation = forms.register?.elements.namedItem("confirm-password") as HTMLInputElement;
+    const name = forms.register?.elements.namedItem("name") as HTMLInputElement;
+    const email = forms.register?.elements.namedItem("email") as HTMLInputElement;
 
     if (password.value !== confirmation.value) {
       confirmation.setCustomValidity("Las contraseñas no coinciden.");
@@ -314,13 +343,73 @@ import { movies } from "@/data/movies";
     }
 
     confirmation.setCustomValidity("");
-    showView("confirmation");
+    try {
+      const userPool = getUserPool();
+      userPool.signUp(
+        email.value,
+        password.value,
+        [
+          new CognitoUserAttribute({ Name: "email", Value: email.value }),
+          new CognitoUserAttribute({ Name: "name", Value: name.value }),
+        ],
+        [],
+        (error) => {
+          if (error) {
+            showMessage(forms.register, error.message);
+            return;
+          }
+          pendingUsername = email.value;
+          const confirmationEmail = forms.confirmation?.elements.namedItem("email") as HTMLInputElement;
+          if (confirmationEmail) confirmationEmail.value = email.value;
+          showView("confirmation");
+        },
+      );
+    } catch (error) {
+      showMessage(forms.register, error instanceof Error ? error.message : "No se pudo crear la cuenta.");
+    }
+  });
+
+  forms.login?.addEventListener("submit", (event) => {
+    event.preventDefault();
+    const email = forms.login?.elements.namedItem("email") as HTMLInputElement;
+    const password = forms.login?.elements.namedItem("password") as HTMLInputElement;
+
+    try {
+      const userPool = getUserPool();
+      const user = new CognitoUser({ Username: email.value, Pool: userPool });
+      user.authenticateUser(new AuthenticationDetails({ Username: email.value, Password: password.value }), {
+        onSuccess: () => {
+          window.location.href = "/";
+        },
+        onFailure: (error) => showMessage(forms.login, error.message),
+      });
+    } catch (error) {
+      showMessage(forms.login, error instanceof Error ? error.message : "No se pudo iniciar sesión.");
+    }
   });
 
   forms.confirmation?.addEventListener("submit", (event) => {
     event.preventDefault();
-    const message = forms.confirmation?.querySelector(".form-message");
-    if (message) message.textContent = "La confirmación se conectará cuando el backend esté disponible.";
+    const email = forms.confirmation?.elements.namedItem("email") as HTMLInputElement;
+    const code = Array.from(forms.confirmation.querySelectorAll<HTMLInputElement>(".code-inputs input"))
+      .map((input) => input.value)
+      .join("");
+
+    try {
+      const userPool = getUserPool();
+      const username = email.value || pendingUsername;
+      const user = new CognitoUser({ Username: username, Pool: userPool });
+      user.confirmRegistration(code, true, (error) => {
+        if (error) {
+          showMessage(forms.confirmation, error.message);
+          return;
+        }
+        showView("login");
+        showMessage(forms.login, "Cuenta confirmada. Ya puedes iniciar sesión.");
+      });
+    } catch (error) {
+      showMessage(forms.confirmation, error instanceof Error ? error.message : "No se pudo confirmar la cuenta.");
+    }
   });
 
   const codeInputs = Array.from(document.querySelectorAll<HTMLInputElement>(".code-inputs input"));
