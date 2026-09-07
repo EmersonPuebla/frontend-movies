@@ -1,18 +1,4 @@
-# Frontend Movies
-
-Frontend Astro para el catálogo de películas y el flujo de autenticación con Amazon Cognito.
-
-## Configuración de Cognito
-
-La página `/login` usa Cognito User Pools para iniciar sesión, registrar usuarios y confirmar cuentas. Copia `.env.example` a `.env` y completa los valores públicos de tu User Pool:
-
-```sh
-cp .env.example .env
-```
-
-Configura también el dominio de la aplicación frontend en Cognito con la URL de callback correspondiente. El `ClientId` no es un secreto y se expone mediante variables `PUBLIC_`; nunca guardes el client secret en este frontend.
-
-El backend FastAPI deberá validar el `access_token` o `id_token` enviado en `Authorization: Bearer <token>` usando las claves públicas JWKS del User Pool, verificando firma, issuer, audience y expiración.
+# Astro Starter Kit: Minimal
 
 ```sh
 npm create astro@latest -- --template minimal
