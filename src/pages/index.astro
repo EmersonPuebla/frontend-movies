@@ -3,43 +3,118 @@ import "@/styles/global.css";
 import Card from "@/components/movies/Card.astro";
 import Grid from "@/components/movies/Grid.astro";
 import { movies } from "@/data/movies";
-import { ClientRouter } from "astro:transitions"; 
+import { ClientRouter } from "astro:transitions";
 ---
 
 <html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <link rel="icon" href="/favicon.ico" />
-    <meta name="viewport" content="width=device-width" />
-    <meta name="generator" content={Astro.generator} />
-    <title>Movies</title>
-    <ClientRouter /> 
-  </head>
-  <body>
-    <h1>Movies</h1>
+    <head>
+        <meta charset="utf-8" />
+        <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+        <link rel="icon" href="/favicon.ico" />
+        <meta name="viewport" content="width=device-width" />
+        <meta name="generator" content={Astro.generator} />
+        <title>Movies</title>
+        <ClientRouter />
+    </head>
+    <body>
+        <header class="site-header">
+            <a href="/" class="brand">
+                Movies
+            </a>
+            <div id="auth-status" aria-live="polite"></div>
+        </header>
 
-    <Grid>
-      {
-        movies.map((movie) => (
-          <a href={`/movies/${movie.slug}`} class="movie-link">
-            <Card
-              title={movie.title}
-              duration={movie.duration}
-              imageSrc={movie.imageSrc}
-              transitionName={`poster-${movie.slug}`} 
-            />
-          </a>
-        ))
-      }
-    </Grid>
-  </body>
+        <h1>Movies</h1>
+
+        <Grid>
+            {movies.map((movie) => (
+                <a href={`/movies/${movie.slug}`} class="movie-link">
+                    <Card
+                        title={movie.title}
+                        duration={movie.duration}
+                        imageSrc={movie.imageSrc}
+                        transitionName={`poster-${movie.slug}`}
+                    />
+                </a>
+            ))}
+        </Grid>
+    </body>
 </html>
 
 <style>
-  .movie-link {
-    text-decoration: none;
-    color: inherit;
-    display: block;
-  }
+    .movie-link {
+        text-decoration: none;
+        color: inherit;
+        display: block;
+    }
+
+    .site-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        padding: 1rem 1.5rem;
+    }
+
+    .brand {
+        color: var(--main-color);
+        font-weight: 700;
+        text-decoration: none;
+    }
+
+    #auth-status {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        font-size: 0.9rem;
+    }
+
+    #auth-status button {
+        border: 1px solid var(--main-color);
+        border-radius: 0.4rem;
+        padding: 0.35rem 0.75rem;
+        color: var(--main-color);
+        background: transparent;
+        cursor: pointer;
+        font: inherit;
+    }
+
+    #auth-status a {
+        color: var(--main-color);
+    }
 </style>
+
+<script>
+    import { currentUserEmail, signOutUser } from "@/lib/auth";
+
+    const status = document.querySelector<HTMLDivElement>("#auth-status");
+
+    async function renderAuthStatus() {
+        if (!status) return;
+
+        const email = await currentUserEmail();
+        status.replaceChildren();
+
+        if (email) {
+            const greeting = document.createElement("span");
+            greeting.textContent = `Hola, ${email}`;
+
+            const logout = document.createElement("button");
+            logout.type = "button";
+            logout.textContent = "Cerrar sesión";
+            logout.addEventListener("click", async () => {
+                await signOutUser();
+                window.location.reload();
+            });
+
+            status.append(greeting, logout);
+        } else {
+            const link = document.createElement("a");
+            link.href = "/login";
+            link.textContent = "Iniciar sesión";
+            status.append(link);
+        }
+    }
+
+    renderAuthStatus();
+</script>
