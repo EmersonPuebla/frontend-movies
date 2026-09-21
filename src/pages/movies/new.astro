@@ -1,0 +1,65 @@
+---
+import Layout from "@/layouts/Layout.astro";
+import MovieForm from "@/components/movies/MovieForm.astro";
+import { getAccessToken } from "@/lib/session";
+import { createMovie, parseMovieForm, uploadImage } from "@/lib/api";
+
+const accessToken = getAccessToken(Astro.request.headers.get("cookie")) ?? "";
+
+let error: string | null = null;
+
+if (Astro.request.method === "POST") {
+    const formData = await Astro.request.formData();
+    const result = parseMovieForm(formData);
+
+    if (!result.ok) {
+        error = result.error;
+    } else {
+        try {
+            const input = result.input;
+            const file = formData.get("image_file");
+            if (file instanceof File && file.size > 0) {
+                input.image_src = await uploadImage(accessToken, file);
+            }
+            const movie = await createMovie(accessToken, input);
+            return Astro.redirect(`/movies/${movie.slug}`);
+        } catch (e) {
+            error =
+                e instanceof Error ? e.message : "Error al crear la película";
+        }
+    }
+}
+---
+
+<Layout title="Agregar película">
+    <main class="page">
+        <a class="back" href="/movies">
+            ← Volver
+        </a>
+        <h1>Agregar película</h1>
+        <MovieForm error={error} submitLabel="Crear película" />
+    </main>
+</Layout>
+
+<style>
+    .page {
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 1.5rem;
+    }
+
+    .back {
+        display: inline-block;
+        margin-bottom: 1rem;
+        text-decoration: none;
+        color: #000;
+        background: var(--main-color);
+        padding: 0.6rem 1rem;
+        border-radius: 4px;
+        font-weight: 600;
+    }
+
+    h1 {
+        margin: 0 0 1.5rem;
+    }
+</style>

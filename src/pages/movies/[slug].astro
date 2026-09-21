@@ -1,7 +1,12 @@
 ---
 import Layout from "@/layouts/Layout.astro";
 import { getAccessToken } from "@/lib/session";
-import { fetchMovieBySlug, resolveImageUrl, type Movie } from "@/lib/api";
+import {
+    deleteMovie,
+    fetchMovieBySlug,
+    resolveImageUrl,
+    type Movie,
+} from "@/lib/api";
 
 const { slug } = Astro.params;
 const accessToken = getAccessToken(Astro.request.headers.get("cookie")) ?? "";
@@ -15,6 +20,18 @@ try {
 } catch (error) {
     errorMessage =
         error instanceof Error ? error.message : "Error al cargar la película";
+}
+
+if (Astro.request.method === "POST" && movie) {
+    try {
+        await deleteMovie(accessToken, movie.id);
+        return Astro.redirect("/movies");
+    } catch (error) {
+        errorMessage =
+            error instanceof Error
+                ? error.message
+                : "Error al eliminar la película";
+    }
 }
 
 function formatDate(value: string): string {
@@ -66,6 +83,21 @@ function formatDate(value: string): string {
                             <p>{movie.director}</p>
                         </div>
                     </div>
+                </div>
+
+                <div class="actions">
+                    <a class="edit" href={`/movies/${movie.slug}/edit`}>
+                        Editar
+                    </a>
+                    <form
+                        method="POST"
+                        data-astro-reload
+                        onsubmit="return confirm('¿Seguro que quieres eliminar esta película?')"
+                    >
+                        <button type="submit" class="delete">
+                            Eliminar
+                        </button>
+                    </form>
                 </div>
             </>
         )}
@@ -138,6 +170,37 @@ function formatDate(value: string): string {
 
     .message {
         color: #b5bdcf;
+    }
+
+    .actions {
+        display: flex;
+        gap: 0.75rem;
+        margin-top: 2rem;
+    }
+
+    .edit {
+        text-decoration: none;
+        color: #000;
+        background: var(--main-color);
+        padding: 0.6rem 1rem;
+        border-radius: 4px;
+        font-weight: 600;
+    }
+
+    .delete {
+        color: #ff7a7a;
+        background: transparent;
+        border: 1px solid rgba(255, 122, 122, 0.5);
+        border-radius: 4px;
+        padding: 0.6rem 1rem;
+        font: inherit;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background-color 120ms ease;
+    }
+
+    .delete:hover {
+        background: rgba(255, 122, 122, 0.12);
     }
 
     @media (max-width: 600px) {

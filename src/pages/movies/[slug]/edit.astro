@@ -1,0 +1,102 @@
+---
+import Layout from "@/layouts/Layout.astro";
+import MovieForm from "@/components/movies/MovieForm.astro";
+import { getAccessToken } from "@/lib/session";
+import {
+    fetchMovieBySlug,
+    parseMovieForm,
+    updateMovie,
+    uploadImage,
+    type Movie,
+} from "@/lib/api";
+
+const { slug } = Astro.params;
+const accessToken = getAccessToken(Astro.request.headers.get("cookie")) ?? "";
+
+let movie: Movie | undefined;
+let error: string | null = null;
+
+try {
+    movie = await fetchMovieBySlug(accessToken, slug ?? "");
+} catch (e) {
+    error = e instanceof Error ? e.message : "Error al cargar la película";
+}
+
+if (Astro.request.method === "POST") {
+    if (!movie) {
+        error = "Película no encontrada";
+    } else {
+        const formData = await Astro.request.formData();
+        const result = parseMovieForm(formData);
+
+        if (!result.ok) {
+            error = result.error;
+        } else {
+            try {
+                const input = result.input;
+                const file = formData.get("image_file");
+                if (file instanceof File && file.size > 0) {
+                    input.image_src = await uploadImage(accessToken, file);
+                }
+                const updated = await updateMovie(accessToken, movie.id, input);
+                return Astro.redirect(`/movies/${updated.slug}`);
+            } catch (e) {
+                error =
+                    e instanceof Error
+                        ? e.message
+                        : "Error al actualizar la película";
+            }
+        }
+    }
+}
+---
+
+<Layout title={movie ? `Editar ${movie.title}` : "Editar película"}>
+    <main class="page">
+        <a class="back" href="/movies">
+            ← Volver
+        </a>
+
+        {movie ? (
+            <>
+                <h1>Editar {movie.title}</h1>
+                <MovieForm
+                    movie={movie}
+                    error={error}
+                    submitLabel="Guardar cambios"
+                />
+            </>
+        ) : (
+            <p class="message" role="alert">
+                {error ?? "Película no encontrada"}
+            </p>
+        )}
+    </main>
+</Layout>
+
+<style>
+    .page {
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 1.5rem;
+    }
+
+    .back {
+        display: inline-block;
+        margin-bottom: 1rem;
+        text-decoration: none;
+        color: #000;
+        background: var(--main-color);
+        padding: 0.6rem 1rem;
+        border-radius: 4px;
+        font-weight: 600;
+    }
+
+    h1 {
+        margin: 0 0 1.5rem;
+    }
+
+    .message {
+        color: #b5bdcf;
+    }
+</style>

@@ -1,0 +1,278 @@
+---
+import { resolveImageUrl } from "@/lib/api";
+
+interface Props {
+    movie?: {
+        title: string;
+        duration: number;
+        release_date: string;
+        director: string;
+        synopsis: string;
+        image_src: string;
+        slug: string;
+    };
+    error?: string | null;
+    submitLabel: string;
+}
+
+const { movie, error = null, submitLabel } = Astro.props;
+const previewSrc = movie?.image_src ? resolveImageUrl(movie.image_src) : null;
+---
+
+<form method="POST" enctype="multipart/form-data" class="movie-form">
+    {error ? (
+        <p class="form-error" role="alert">
+            {error}
+        </p>
+    ) : null}
+
+    <div class="field">
+        <label for="title">Título</label>
+        <input
+            id="title"
+            name="title"
+            type="text"
+            value={movie?.title}
+            required
+        />
+    </div>
+
+    <div class="field">
+        <label for="slug">Slug</label>
+        <input
+            id="slug"
+            name="slug"
+            type="text"
+            value={movie?.slug}
+            placeholder="se-genera-del-titulo"
+            required
+        />
+        <p class="hint">Se autocompleta con el título; puedes cambiarlo.</p>
+    </div>
+
+    <div class="field">
+        <label for="director">Director</label>
+        <input
+            id="director"
+            name="director"
+            type="text"
+            value={movie?.director}
+            required
+        />
+    </div>
+
+    <div class="row">
+        <div class="field">
+            <label for="duration">Duración (min)</label>
+            <input
+                id="duration"
+                name="duration"
+                type="number"
+                min="1"
+                step="1"
+                value={movie?.duration}
+                required
+            />
+        </div>
+        <div class="field">
+            <label for="release_date">Fecha de estreno</label>
+            <input
+                id="release_date"
+                name="release_date"
+                type="date"
+                value={movie?.release_date}
+                required
+            />
+        </div>
+    </div>
+
+    <div class="field">
+        <label for="synopsis">Sinopsis</label>
+        <textarea
+            id="synopsis"
+            name="synopsis"
+            rows="5"
+        >{movie?.synopsis}</textarea>
+    </div>
+
+    <div class="field">
+        <label for="image_src">Imagen (URL)</label>
+        <input
+            id="image_src"
+            name="image_src"
+            type="text"
+            value={movie?.image_src}
+            placeholder="https://..."
+        />
+
+        <span class="or">o sube un archivo</span>
+
+        <input id="image_file" name="image_file" type="file" accept="image/*" />
+        <p class="hint">Formatos JPG, PNG, WebP o GIF · máx. 5 MB.</p>
+
+        <img
+            id="image-preview"
+            class="image-preview"
+            src={previewSrc ?? undefined}
+            hidden={!previewSrc}
+            alt="Vista previa de la imagen"
+        />
+    </div>
+
+    <button type="submit">{submitLabel}</button>
+</form>
+
+<style>
+    .movie-form {
+        display: grid;
+        gap: 0.9rem;
+        max-width: 40rem;
+    }
+
+    .field {
+        display: grid;
+        gap: 0.35rem;
+    }
+
+    .row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+    }
+
+    label {
+        color: #e4e9f2;
+        font-size: 0.9rem;
+        font-weight: 600;
+    }
+
+    input,
+    textarea {
+        box-sizing: border-box;
+        width: 100%;
+        color: #fff;
+        font: inherit;
+        background: rgba(255, 255, 255, 0.08);
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        border-radius: 0.5rem;
+        padding: 0.7rem 0.85rem;
+    }
+
+    input[type="file"] {
+        padding: 0.5rem;
+    }
+
+    textarea {
+        resize: vertical;
+    }
+
+    input:focus,
+    textarea:focus {
+        border-color: var(--main-color);
+        outline: 2px solid rgba(89, 255, 194, 0.25);
+    }
+
+    .hint {
+        color: #8b95ab;
+        font-size: 0.78rem;
+        margin: 0;
+    }
+
+    .or {
+        color: #8b95ab;
+        font-size: 0.8rem;
+        text-align: center;
+    }
+
+    .image-preview {
+        max-width: 240px;
+        aspect-ratio: 2 / 3;
+        object-fit: cover;
+        border-radius: 0.5rem;
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        margin-top: 0.25rem;
+    }
+
+    button[type="submit"] {
+        color: #000;
+        background-color: var(--main-color);
+        cursor: pointer;
+        font: inherit;
+        font-weight: 700;
+        border: 0;
+        border-radius: 0.5rem;
+        padding: 0.85rem 1.5rem;
+        margin-top: 0.5rem;
+    }
+
+    button[type="submit"]:hover {
+        filter: brightness(0.9);
+    }
+
+    .form-error {
+        color: #ff7a7a;
+        margin: 0 0 0.25rem;
+        font-size: 0.9rem;
+    }
+
+    @media (max-width: 480px) {
+        .row {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+
+<script>
+    import { resolveImageUrl, slugify } from "@/lib/api";
+
+    function initMovieForm() {
+        const form = document.querySelector<HTMLFormElement>(".movie-form");
+        if (!form) return;
+
+        const title = form.querySelector<HTMLInputElement>("#title");
+        const slug = form.querySelector<HTMLInputElement>("#slug");
+        const imageUrl = form.querySelector<HTMLInputElement>("#image_src");
+        const imageFile = form.querySelector<HTMLInputElement>("#image_file");
+        const preview = form.querySelector<HTMLImageElement>("#image-preview");
+
+        // Si el slug ya venía relleno (edición), no lo pises al teclear el título.
+        let slugTouched = (slug?.value.trim() ?? "") !== "";
+
+        title?.addEventListener("input", () => {
+            if (!slugTouched && slug) slug.value = slugify(title.value);
+        });
+
+        slug?.addEventListener("input", () => {
+            slugTouched = slug.value.trim() !== "";
+        });
+
+        function showPreview(src: string | null) {
+            if (!preview) return;
+            if (src) {
+                preview.src = src;
+                preview.hidden = false;
+            } else {
+                preview.removeAttribute("src");
+                preview.hidden = true;
+            }
+        }
+
+        function previewFromUrl() {
+            const value = imageUrl?.value.trim();
+            showPreview(value ? resolveImageUrl(value) : null);
+        }
+
+        imageUrl?.addEventListener("input", previewFromUrl);
+
+        imageFile?.addEventListener("change", () => {
+            const file = imageFile.files?.[0];
+            if (file) {
+                showPreview(URL.createObjectURL(file));
+            } else {
+                previewFromUrl();
+            }
+        });
+    }
+
+    document.addEventListener("astro:page-load", initMovieForm);
+</script>
