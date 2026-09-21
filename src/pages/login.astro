@@ -1,6 +1,9 @@
 ---
 import "@/styles/global.css";
-import { movies } from "@/data/movies";
+
+const API_URL = import.meta.env.PUBLIC_API_URL || "http://localhost:8000";
+const posterFiles = ["harry_potter.jpg", "yorobot.jpg", "walle.webp"];
+const posters = posterFiles.map((file) => `${API_URL}/static/${file}`);
 ---
 
 <html lang="es">
@@ -13,8 +16,8 @@ import { movies } from "@/data/movies";
         <main class="login-page">
             <div class="movie-background" aria-hidden="true">
                 <div class="movie-track">
-                    {[...movies, ...movies].map((movie) => (
-                        <img src={movie.imageSrc} alt="" />
+                    {[...posters, ...posters].map((src) => (
+                        <img src={src} alt="" />
                     ))}
                 </div>
             </div>
@@ -407,7 +410,7 @@ import { movies } from "@/data/movies";
         try {
             const result = await signInUser(email, password);
             if (result.isSignedIn) {
-                window.location.href = "/";
+                window.location.href = "/movies";
                 return;
             }
 

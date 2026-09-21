@@ -1,11 +1,12 @@
 import { Amplify } from "aws-amplify";
 import {
   confirmSignUp as amplifyConfirmSignUp,
-  getCurrentUser,
   signIn as amplifySignIn,
   signOut as amplifySignOut,
   signUp as amplifySignUp,
 } from "aws-amplify/auth";
+import { CookieStorage } from "aws-amplify/utils";
+import { cognitoUserPoolsTokenProvider } from "aws-amplify/auth/cognito";
 
 const userPoolId = import.meta.env.PUBLIC_COGNITO_USER_POOL_ID;
 const userPoolClientId = import.meta.env.PUBLIC_COGNITO_CLIENT_ID;
@@ -24,6 +25,17 @@ Amplify.configure({
     },
   },
 });
+
+// Persist the session in cookies (instead of localStorage) so the Astro
+// middleware can read the access token server-side and protect routes.
+cognitoUserPoolsTokenProvider.setKeyValueStorage(
+  new CookieStorage({
+    path: "/",
+    expires: 365,
+    sameSite: "lax",
+    secure: import.meta.env.PROD,
+  }),
+);
 
 export function signInUser(email: string, password: string) {
   return amplifySignIn({ username: email, password });
@@ -47,14 +59,6 @@ export function signOutUser() {
   return amplifySignOut();
 }
 
-export async function currentUserEmail(): Promise<string | null> {
-  try {
-    const { signInDetails, username } = await getCurrentUser();
-    return signInDetails?.loginId ?? username;
-  } catch {
-    return null;
-  }
-}
 
 const ERROR_MESSAGES: Record<string, string> = {
   UserNotConfirmedException:

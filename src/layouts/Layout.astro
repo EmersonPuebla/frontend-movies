@@ -1,0 +1,65 @@
+---
+import "@/styles/global.css";
+import { ClientRouter } from "astro:transitions";
+import UserMenu from "@/components/UserMenu.astro";
+import { getSessionUser } from "@/lib/session";
+
+interface Props {
+    title: string;
+}
+
+const { title } = Astro.props;
+
+const user = getSessionUser(Astro.request.headers.get("cookie"));
+---
+
+<!doctype html>
+<html lang="es">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width" />
+        <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+        <link rel="icon" href="/favicon.ico" />
+        <meta name="generator" content={Astro.generator} />
+        <title>{title}</title>
+        <ClientRouter />
+    </head>
+    <body>
+        <header class="site-header">
+            <a href="/movies" class="brand">
+                Movies
+            </a>
+            <UserMenu
+                name={user.name}
+                email={user.email}
+                username={user.username}
+            />
+        </header>
+        <slot />
+    </body>
+</html>
+
+<style>
+    :global(body) {
+        margin: 0;
+        min-height: 100vh;
+        background: #090d16;
+        color: #e4e9f2;
+    }
+
+    .site-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        padding: 1rem 1.5rem;
+    }
+
+    .brand {
+        color: var(--main-color);
+        font-size: 1.25rem;
+        font-weight: 800;
+        letter-spacing: 0.02em;
+        text-decoration: none;
+    }
+</style>

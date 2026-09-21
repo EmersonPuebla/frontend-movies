@@ -1,0 +1,244 @@
+---
+interface Props {
+    name?: string | null;
+    email?: string | null;
+    username?: string | null;
+}
+
+const { name = null, email = null, username = null } = Astro.props;
+
+const displayName = name || email || username || "Usuario";
+const initial = displayName.charAt(0).toUpperCase();
+---
+
+<div class="user-menu">
+    <button
+        type="button"
+        class="user-card"
+        aria-haspopup="menu"
+        aria-expanded="false"
+    >
+        <span class="user-avatar">{initial}</span>
+        <span class="user-name">{displayName}</span>
+        <svg
+            class="chevron"
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+        >
+            <polyline points="6 9 12 15 18 9"></polyline>
+        </svg>
+    </button>
+
+    <div class="user-dropdown" role="menu" hidden>
+        <div class="dropdown-header">
+            <span class="dropdown-name">{displayName}</span>
+            <span class="dropdown-email" class:list={{ "is-empty": !email }}>
+                {email}
+            </span>
+        </div>
+        <div class="dropdown-divider"></div>
+        <button type="button" class="dropdown-item" role="menuitem" data-logout>
+            <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                aria-hidden="true"
+            >
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                <polyline points="16 17 21 12 16 7"></polyline>
+                <line x1="21" y1="12" x2="9" y2="12"></line>
+            </svg>
+            <span>Cerrar sesión</span>
+        </button>
+    </div>
+</div>
+
+<style>
+    .user-menu {
+        position: relative;
+    }
+
+    .user-card {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.3rem 0.7rem 0.3rem 0.35rem;
+        border: 1px solid rgba(255, 255, 255, 0.16);
+        border-radius: 999px;
+        color: #e4e9f2;
+        background: rgba(255, 255, 255, 0.06);
+        cursor: pointer;
+        font: inherit;
+        transition:
+            border-color 160ms ease,
+            background-color 160ms ease;
+    }
+
+    .user-card:hover,
+    .user-card:focus-visible {
+        border-color: var(--main-color);
+        background: rgba(89, 255, 194, 0.08);
+        outline: none;
+    }
+
+    .user-card.is-open {
+        border-color: var(--main-color);
+        background: rgba(89, 255, 194, 0.08);
+    }
+
+    .user-avatar {
+        display: grid;
+        place-items: center;
+        width: 1.75rem;
+        height: 1.75rem;
+        border-radius: 50%;
+        color: #0b0f19;
+        background: var(--main-color);
+        font-weight: 700;
+        font-size: 0.8rem;
+        text-transform: uppercase;
+    }
+
+    .user-name {
+        font-weight: 600;
+        font-size: 0.9rem;
+    }
+
+    .chevron {
+        color: #9aa3b8;
+        transition: transform 160ms ease;
+    }
+
+    .user-card.is-open .chevron {
+        transform: rotate(180deg);
+    }
+
+    .user-dropdown {
+        position: absolute;
+        top: calc(100% + 0.5rem);
+        right: 0;
+        min-width: 14rem;
+        padding: 0.4rem;
+        border: 1px solid rgba(255, 255, 255, 0.14);
+        border-radius: 0.75rem;
+        background: #141a28;
+        box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5);
+        z-index: 50;
+    }
+
+    .dropdown-header {
+        display: grid;
+        gap: 0.15rem;
+        padding: 0.45rem 0.6rem 0.55rem;
+    }
+
+    .dropdown-name {
+        color: #fff;
+        font-weight: 700;
+        font-size: 0.9rem;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .dropdown-email {
+        color: #8b95ab;
+        font-size: 0.78rem;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .dropdown-email.is-empty {
+        display: none;
+    }
+
+    .dropdown-divider {
+        height: 1px;
+        margin: 0.25rem 0;
+        background: rgba(255, 255, 255, 0.08);
+    }
+
+    .dropdown-item {
+        display: flex;
+        align-items: center;
+        gap: 0.6rem;
+        width: 100%;
+        padding: 0.55rem 0.6rem;
+        border: 0;
+        border-radius: 0.5rem;
+        color: #ff7a7a;
+        background: transparent;
+        cursor: pointer;
+        text-align: left;
+        font: inherit;
+        font-size: 0.9rem;
+        transition: background-color 120ms ease;
+    }
+
+    .dropdown-item:hover,
+    .dropdown-item:focus-visible {
+        background: rgba(255, 122, 122, 0.12);
+        outline: none;
+    }
+
+    .dropdown-item svg {
+        flex: 0 0 auto;
+    }
+</style>
+
+<script>
+    import { signOutUser } from "@/lib/auth";
+
+    function getElements() {
+        const card = document.querySelector<HTMLButtonElement>(".user-card");
+        const dropdown = document.querySelector<HTMLElement>(".user-dropdown");
+        const logout =
+            document.querySelector<HTMLButtonElement>("[data-logout]");
+        return { card, dropdown, logout };
+    }
+
+    function setOpen(open: boolean) {
+        const { card, dropdown } = getElements();
+        if (!card || !dropdown) return;
+        dropdown.hidden = !open;
+        card.classList.toggle("is-open", open);
+        card.setAttribute("aria-expanded", String(open));
+    }
+
+    // Runs on first load and after every client-side navigation. The module
+    // script itself only executes once, and the DOM nodes are replaced on
+    // each navigation, so the listeners must be re-attached here.
+    document.addEventListener("astro:page-load", () => {
+        const { card, dropdown, logout } = getElements();
+
+        card?.addEventListener("click", (event) => {
+            event.stopPropagation();
+            if (!dropdown) return;
+            const isOpen = dropdown.hidden === false;
+            setOpen(!isOpen);
+        });
+
+        logout?.addEventListener("click", async () => {
+            await signOutUser();
+            window.location.assign("/login");
+        });
+    });
+
+    document.addEventListener("click", () => setOpen(false));
+    document.addEventListener("keydown", (event) => {
+        if (event.key === "Escape") setOpen(false);
+    });
+</script>

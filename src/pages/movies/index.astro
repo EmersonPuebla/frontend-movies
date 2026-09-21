@@ -1,0 +1,72 @@
+---
+import Layout from "@/layouts/Layout.astro";
+import Grid from "@/components/movies/Grid.astro";
+import Card from "@/components/movies/Card.astro";
+import { getAccessToken } from "@/lib/session";
+import { fetchMovies, resolveImageUrl, type Movie } from "@/lib/api";
+
+const accessToken = getAccessToken(Astro.request.headers.get("cookie")) ?? "";
+
+let movies: Movie[] = [];
+let errorMessage: string | null = null;
+
+try {
+    movies = await fetchMovies(accessToken);
+} catch (error) {
+    errorMessage =
+        error instanceof Error
+            ? error.message
+            : "Error al cargar las películas";
+}
+---
+
+<Layout title="Movies">
+    <main class="page">
+        <h1>Movies</h1>
+
+        {errorMessage ? (
+            <p class="message" role="alert">
+                {errorMessage}
+            </p>
+        ) : movies.length === 0 ? (
+            <p class="message">No hay películas disponibles.</p>
+        ) : (
+            <Grid>
+                {movies.map((movie) => (
+                    <a class="movie-link" href={`/movies/${movie.slug}`}>
+                        <Card
+                            title={movie.title}
+                            duration={movie.duration}
+                            imageSrc={resolveImageUrl(movie.image_src)}
+                            imageAlt={movie.title}
+                            transitionName={movie.slug}
+                        />
+                    </a>
+                ))}
+            </Grid>
+        )}
+    </main>
+</Layout>
+
+<style>
+    .page {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 0 1.5rem 2rem;
+    }
+
+    h1 {
+        margin: 0.5rem 0 1.5rem;
+        font-size: 2rem;
+    }
+
+    .movie-link {
+        display: block;
+        text-decoration: none;
+        color: inherit;
+    }
+
+    .message {
+        color: #b5bdcf;
+    }
+</style>
