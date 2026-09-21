@@ -3,7 +3,8 @@ import Layout from "@/layouts/Layout.astro";
 import Grid from "@/components/movies/Grid.astro";
 import Card from "@/components/movies/Card.astro";
 import { getAccessToken } from "@/lib/session";
-import { fetchMovies, resolveImageUrl, type Movie } from "@/lib/api";
+import { fetchMovies, type Movie } from "@/lib/api";
+import { resolveImageUrl } from "@/lib/media";
 
 const accessToken = getAccessToken(Astro.request.headers.get("cookie")) ?? "";
 

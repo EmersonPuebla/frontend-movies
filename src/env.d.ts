@@ -5,3 +5,8 @@ interface ImportMetaEnv {
   readonly PUBLIC_COGNITO_CLIENT_ID: string;
   readonly PUBLIC_API_URL: string;
 }
+
+// Disponible en el runtime SSR de Node (no hay @types/node en el proyecto).
+declare const process: {
+  env: Record<string, string | undefined>;
+};

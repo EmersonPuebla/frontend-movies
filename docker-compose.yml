@@ -1,0 +1,44 @@
+services:
+  backend:
+    build:
+      context: ../backend-movies
+    environment:
+      COGNITO_REGION: ${COGNITO_REGION}
+      COGNITO_USER_POOL_ID: ${COGNITO_USER_POOL_ID}
+      COGNITO_CLIENT_ID: ${COGNITO_CLIENT_ID}
+      DB_PATH: /data/movies.db
+      STATIC_DIR: /data/static
+    volumes:
+      - movies-data:/data
+    expose:
+      - "8000"
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: .
+      args:
+        PUBLIC_COGNITO_USER_POOL_ID: ${PUBLIC_COGNITO_USER_POOL_ID}
+        PUBLIC_COGNITO_CLIENT_ID: ${PUBLIC_COGNITO_CLIENT_ID}
+        PUBLIC_API_URL: /api
+    environment:
+      API_URL: http://backend:8000
+    expose:
+      - "4321"
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "8080:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - backend
+      - frontend
+    restart: unless-stopped
+
+volumes:
+  movies-data:

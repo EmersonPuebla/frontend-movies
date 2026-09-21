@@ -1,9 +1,5 @@
 ---
 import "@/styles/global.css";
-
-const API_URL = import.meta.env.PUBLIC_API_URL || "http://localhost:8000";
-const posterFiles = ["harry_potter.jpg", "yorobot.jpg", "walle.webp"];
-const posters = posterFiles.map((file) => `${API_URL}/static/${file}`);
 ---
 
 <html lang="es">
@@ -14,13 +10,6 @@ const posters = posterFiles.map((file) => `${API_URL}/static/${file}`);
     </head>
     <body>
         <main class="login-page">
-            <div class="movie-background" aria-hidden="true">
-                <div class="movie-track">
-                    {[...posters, ...posters].map((src) => (
-                        <img src={src} alt="" />
-                    ))}
-                </div>
-            </div>
             <section class="auth-panel" aria-labelledby="auth-title">
                 <h1 id="auth-title">Bienvenido</h1>
                 <p class="subtitle">
@@ -172,40 +161,6 @@ const posters = posterFiles.map((file) => `${API_URL}/static/${file}`);
             linear-gradient(135deg, #101827 0%, #090d16 55%, #17112b 100%);
         padding: 2rem;
         box-sizing: border-box;
-    }
-
-    .movie-background {
-        position: absolute;
-        inset: -10%;
-        overflow: hidden;
-        opacity: 0.16;
-        transform: rotate(-8deg) scale(1.15);
-        pointer-events: none;
-    }
-
-    .movie-track {
-        display: flex;
-        gap: 1.5rem;
-        width: max-content;
-        animation: movie-scroll 32s linear infinite;
-    }
-
-    .movie-track img {
-        width: clamp(10rem, 18vw, 16rem);
-        height: clamp(15rem, 27vw, 24rem);
-        flex: 0 0 auto;
-        object-fit: cover;
-        border-radius: 0.75rem;
-        filter: saturate(0.8);
-    }
-
-    @keyframes movie-scroll {
-        from {
-            transform: translateX(0);
-        }
-        to {
-            transform: translateX(-50%);
-        }
     }
 
     .login-page::before,

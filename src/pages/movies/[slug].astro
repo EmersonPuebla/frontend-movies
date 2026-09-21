@@ -1,12 +1,8 @@
 ---
 import Layout from "@/layouts/Layout.astro";
 import { getAccessToken } from "@/lib/session";
-import {
-    deleteMovie,
-    fetchMovieBySlug,
-    resolveImageUrl,
-    type Movie,
-} from "@/lib/api";
+import { deleteMovie, fetchMovieBySlug, type Movie } from "@/lib/api";
+import { resolveImageUrl } from "@/lib/media";
 
 const { slug } = Astro.params;
 const accessToken = getAccessToken(Astro.request.headers.get("cookie")) ?? "";

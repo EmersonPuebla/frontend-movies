@@ -1,4 +1,8 @@
-const API_URL = import.meta.env.PUBLIC_API_URL || "http://localhost:8000";
+import { slugify } from "./media";
+
+// Base interna del backend, usada SOLO en el servidor (fetch desde las
+// páginas SSR). En Docker se configura vía la variable de entorno API_URL.
+const API_URL = process.env.API_URL || "http://localhost:8000";
 
 export const MAX_IMAGE_SIZE_MB = 5;
 
@@ -28,15 +32,6 @@ interface ApiResponse<T> {
     code: string;
     message: string;
     data: T | null;
-}
-
-/**
- * Resolves the relative path returned by the backend (e.g. `/static/x.jpg`)
- * into an absolute URL pointing at the backend's own static files.
- */
-export function resolveImageUrl(src: string): string {
-    if (/^https?:\/\//i.test(src)) return src;
-    return `${API_URL}${src.startsWith("/") ? "" : "/"}${src}`;
 }
 
 async function readErrorDetail(response: Response): Promise<string | null> {
@@ -169,15 +164,6 @@ export async function uploadImage(
         throw new Error("La API no devolvió la URL de la imagen");
     }
     return result.data.url;
-}
-
-export function slugify(value: string): string {
-    return value
-        .toLowerCase()
-        .normalize("NFD")
-        .replace(/[\u0300-\u036f]/g, "")
-        .replace(/[^a-z0-9]+/g, "-")
-        .replace(/^-+|-+$/g, "");
 }
 
 export type MovieFormResult =

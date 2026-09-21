@@ -1,5 +1,5 @@
 ---
-import { resolveImageUrl } from "@/lib/api";
+import { resolveImageUrl } from "@/lib/media";
 
 interface Props {
     movie?: {
@@ -223,7 +223,7 @@ const previewSrc = movie?.image_src ? resolveImageUrl(movie.image_src) : null;
 </style>
 
 <script>
-    import { resolveImageUrl, slugify } from "@/lib/api";
+    import { resolveImageUrl, slugify } from "@/lib/media";
 
     function initMovieForm() {
         const form = document.querySelector<HTMLFormElement>(".movie-form");
