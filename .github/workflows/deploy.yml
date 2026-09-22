@@ -62,8 +62,9 @@ jobs:
 
       - name: Write deploy .env
         run: |
-          cat > .env <<EOF
-          GHCR_OWNER=${{ env.GHCR_OWNER_LOWER }}
+          cat > .env <<'EOF'
+          GHCR_OWNER=${{ github.repository_owner }}
+          DOMAIN=${{ secrets.EC2_HOST }}.nip.io
           COGNITO_REGION=${{ secrets.COGNITO_REGION }}
           COGNITO_USER_POOL_ID=${{ secrets.COGNITO_USER_POOL_ID }}
           COGNITO_CLIENT_ID=${{ secrets.COGNITO_CLIENT_ID }}
@@ -75,7 +76,7 @@ jobs:
           host: ${{ secrets.EC2_HOST }}
           username: ubuntu
           key: ${{ secrets.EC2_SSH_KEY }}
-          source: "docker-compose.prod.yml,nginx.conf,.env"
+          source: "docker-compose.prod.yml,Caddyfile,.env"
           target: "app"
 
       - name: Deploy stack
