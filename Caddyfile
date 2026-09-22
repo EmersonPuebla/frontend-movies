@@ -1,8 +1,23 @@
 {$DOMAIN} {
-	handle_path /api/* {
-		reverse_proxy backend:8000
-	}
-	handle {
-		reverse_proxy frontend:4321
-	}
+    log {
+        output stdout
+        format console
+    }
+
+    handle_path /api/* {
+        reverse_proxy backend:8000 {
+            header_up Host {host}
+            header_up X-Forwarded-Host {host}
+            header_up X-Forwarded-Proto {scheme}
+        }
+    }
+
+    handle {
+        reverse_proxy frontend:4321 {
+            header_up Host {host}
+            header_up X-Forwarded-Host {host}
+            header_up X-Forwarded-Proto {scheme}
+            header_up X-Forwarded-For {remote}
+        }
+    }
 }
