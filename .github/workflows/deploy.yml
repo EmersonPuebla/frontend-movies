@@ -46,9 +46,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Lowercase owner
-        run: echo "GHCR_OWNER_LOWER=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
-
       - name: Wait for SSH
         env:
           HOST: ${{ secrets.EC2_HOST }}
@@ -62,13 +59,14 @@ jobs:
 
       - name: Write deploy .env
         run: |
-          cat > .env <<'EOF'
-          GHCR_OWNER=${{ github.repository_owner }}
-          DOMAIN=${{ secrets.EC2_HOST }}.nip.io
-          COGNITO_REGION=${{ secrets.COGNITO_REGION }}
-          COGNITO_USER_POOL_ID=${{ secrets.COGNITO_USER_POOL_ID }}
-          COGNITO_CLIENT_ID=${{ secrets.COGNITO_CLIENT_ID }}
-          EOF
+          owner="$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')"
+          {
+            echo "GHCR_OWNER=$owner"
+            echo "DOMAIN=${{ secrets.EC2_HOST }}.nip.io"
+            echo "COGNITO_REGION=${{ secrets.COGNITO_REGION }}"
+            echo "COGNITO_USER_POOL_ID=${{ secrets.COGNITO_USER_POOL_ID }}"
+            echo "COGNITO_CLIENT_ID=${{ secrets.COGNITO_CLIENT_ID }}"
+          } > .env
 
       - name: Copy files to EC2
         uses: appleboy/scp-action@v0.1.7
