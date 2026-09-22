@@ -80,20 +80,15 @@ jobs:
 
       - name: Deploy stack
         uses: appleboy/ssh-action@v1
-        env:
-          GHCR_PAT: ${{ secrets.GHCR_PAT }}
-          GHCR_USERNAME: ${{ secrets.GHCR_USERNAME }}
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ubuntu
           key: ${{ secrets.EC2_SSH_KEY }}
-          envs: GHCR_PAT,GHCR_USERNAME
           script: |
             set -e
             if ! command -v docker >/dev/null 2>&1; then
               curl -fsSL https://get.docker.com | sudo sh
             fi
             cd ~/app
-            echo "${GHCR_PAT}" | sudo docker login ghcr.io -u "${GHCR_USERNAME}" --password-stdin
             sudo docker compose -f docker-compose.prod.yml pull
             sudo docker compose -f docker-compose.prod.yml up -d --remove-orphans
